@@ -261,27 +261,7 @@ What this formula does:
 
 It takes the model's intuition \mu_t. It adds the anchor correction multiplied by \lambda and the noise scale. It adds random noise multiplied by (1-\lambda) and the noise scale.
 
-The authors also give an equivalent form:
 
-```latex
-x_{t-\Delta t}^{\text{guided}} = (1 - \lambda) \mu_t + \lambda x_{t-\Delta t}^* + (1 - \lambda) \sigma_{\text{step}} z_t^{\text{std}}
-```
-
-This second version is easier to understand. It says: new image = a mix of the model's intuition \mu_t (weight 1-\lambda) and the anchor target x_{t-\Delta t}^* (weight \lambda), plus a little random noise.
-
-[pause]
-
-Interactive moment 3 — Ask the audience a rhetorical question
-
-So after seeing these formulas — does anyone want to guess why the authors call it "Dynamic Path Guidance"? [Pause 3 seconds] It is dynamic because the mixing weight λ changes over time. At the beginning it is large, at the end it is small. The path is guided by the anchor, but not forced. That is the whole idea.
-
-[pause]
-
-So all five formulas describe one simple and elegant idea. The model mixes its own intuition with a hint from the anchor. At the beginning, it listens more to the anchor — to avoid drifting into noise. At the end, it listens more to its own intuition and random noise — to find the best fine details.
-
-[pause for transition]
-
----
 
 Slide 6. Results
 
@@ -295,104 +275,26 @@ In the paper there is a large table — Table 1. I will not list every number, b
 
 First. Comparison with existing methods.
 
-The authors compared BeautyGRPO with five specialized retouching models and four general editing models. They also compared with FlowGRPO — the method that uses SDE without guidance.
+The authors compared BeautyGRPO with five specialized retouching models and four general editing models. 
 
-They evaluated the results using six no‑reference quality metrics. These metrics try to measure how natural and beautiful an image looks without needing a "perfect" reference image.
+They evaluated the results using six no‑reference quality metrics. These metrics try to measure how natural and beautiful an image looks without needing a "perfect" reference image.They did user study to compare these models
 
 On all of these metrics, BeautyGRPO beats every existing method.
 
-Let me give you one concrete example. The metric NIMA measures aesthetic appeal on a scale from 0 to 10. The best competing models score around 4.7 to 4.9. BeautyGRPO scores 5.123 on the FFHQ dataset and 5.357 on the in‑the‑wild dataset. That is about a 10 percent improvement.
 
-On the MUSIQ metric, the improvement is even larger. The best competitor gives about 4.68. BeautyGRPO gives 4.906 on FFHQ and 4.982 on in‑the‑wild.
-
-[pause]
-
-Second. User study.
-
-The authors ran a survey with 100 participants of different ages and skill levels. They used 20 random test cases.
-
-There were two questionnaires.
-
-In the first questionnaire, participants saw one original portrait and five retouched versions from different methods. They chose the one they liked best.
-
-The result is shown in Table 2 of the paper. BeautyGRPO was chosen in 63.25 percent of cases. The closest competitor — the Kontext model with LoRA — got only 12 percent. That is more than a five‑times difference.
-
-[pause]
-
-In the second questionnaire, participants rated the retouched results on the same five dimensions that the authors used for data collection: skin smoothing, blemish removal, texture quality, clarity, and identity preservation. They used a five‑point scale.
-
-The authors then compared these human scores with the predictions of different reward models. Their own reward model showed very high correlation — especially for blemish removal, where it reached 87 percent agreement with human judgment.
-
-[pause]
-
-Third. Ablation studies.
-
-The authors also ran several extra experiments.
-
-They showed that their own reward model works better than existing ones — EditReward, EditScore, UnifiedReward-Edit. Results are in Table 3.
-
-They also applied BeautyGRPO to a different base model called Qwen-Image-Edit. The improvements remained. Results in Table 4.
-
-And they studied how many DPG steps are optimal. The best value was K = 3 — meaning the full trajectory is split into three segments, and DPG is applied to one random step in each segment. This gives the same quality as more steps but with less computation.
-
-[pause for transition]
-
----
-
-Slide 7. Visual comparisons
-
-[Show slide 7]
-
-I will comment on this slide briefly. A picture is worth a thousand words.
-
-On the slide you see examples from the paper. In each row or column: the original face, the result from the best existing method, and the result from BeautyGRPO.
-
-[pause]
-
-Look at three things.
-
-First — skin texture. In the competitors' results, the skin is often either completely smoothed out — like plastic — or covered with noise artifacts. In BeautyGRPO, the skin remains alive, with visible pores and natural shine.
-
-Second — moles and small details. Competitors often remove them together with defects. They cannot tell the difference between a temporary imperfection and a unique facial feature. BeautyGRPO keeps them.
-
-Third — overall naturalness. Other methods often look "over‑processed". BeautyGRPO looks natural — as if the person simply had a good night's sleep, not as if they went through a heavy filter.
-
-[pause]
-
-The authors emphasize that their method removes blemishes cleanly but preserves identity — the person remains recognizable. In their view, this is the main criterion of good retouching.
-
-[pause for transition]
-
----
-
-Slide 8. Conclusion. Thank you
-
-[Show slide 8]
-
-Let me summarize.
-
-[pause]
-
-The researchers whose work I have presented today did three main things.
-
-First. They created the FRPref‑10K dataset — 10,000 pairs of images, annotated along five dimensions with a three‑level process. First three AIs, then human annotators, then expert retouchers. Using this dataset, they trained a reward model that predicts human preferences with high accuracy — up to 87 percent for blemish removal.
-
-Second. They proposed the Dynamic Path Guidance algorithm — DPG. This algorithm solves the fundamental conflict between exploration and fidelity. Not copying like in supervised learning. Not random noise like in standard RL. But soft, adaptive guidance using an anchor — a good example of retouching. The mixing coefficient changes over time: at the beginning the model listens more to the anchor, at the end it gets more freedom.
-
-Third. They proved experimentally that BeautyGRPO beats all existing methods. On objective aesthetic metrics — about 10 percent improvement. On direct human preferences — more than a five‑times difference.
-
-[pause]
-
-The paper also discusses limitations. The authors honestly say that their method depends on having a good anchor for each input image. Finding alternative ways to choose anchors — for example, picking from several candidates or building pseudo‑anchors automatically — is future work.
-
-Also, DPG is only used during training. At inference time — when the model is actually used — they use standard ODE sampling without anchors and without extra computation.
-
-[pause]
-
-I want to end with one sentence. The authors do not write it literally, but I believe it captures the spirit of their work.
-
-Good retouching does not erase your face. It helps you look like the best version of yourself — with the same moles, the same texture, the same story.
 
 [pause]
 
 Thank you for your attention. I am ready to answer your questions.
+ Why is those 5 dimensions important? Because most existing datasets only measure global aesthetics — is the picture bright, is it colorful, is it nice overall. Here we have five different aspects. A model can be good on one dimension and bad on another. The authors wanted to capture this difference.
+
+What VLM authors used for rating photos? GPT‑4o, Qwen2.5‑VL‑72B, and Gemini 2.5 Pro
+
+Why does the model listen more to anchor at the beginning?
+Because at the beginning, it is very easy to drift into complete nonsense. If you give the model full freedom, it will wander into noise artifacts. So early steps need more discipline.
+
+Among the five dimensions which one do users care about most? According to the user study results in the paper, all five dimensions matter. However, the authors do not publish a ranking of importance.
+
+100 people participated. They had different ages and different skill levels. There were two questionnaires.
+Questionnaire I: Participants saw one original portrait and five retouched results from different methods. They chose the one they liked best. BeautyGRPO won 63% of the time.
+Questionnaire II: Participants saw one original portrait and one retouched result. They rated the result on five dimensions (skin smoothing, blemish removal, texture, clarity, identity) using a 1–5 scale. These human scores were then compared to the reward model's predictions.
