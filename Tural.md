@@ -1,489 +1,398 @@
+Can you hear me?
+
+Slide 1. Title
+
+Good afternoon, everyone. Glad to see you all on my webinar.
+
+Today I will present a research paper written by a group of scientists from China. The work is called BeautyGRPO.
+
+It is about face retouching. It is a task that may seem simple, but is actually very difficult to do well.
 
 
----
+· Why existing methods for face retouching do not work well
+· What solution the authors propose
+· How they collected their data
+· What the formulas mean
+· And what results they achieved
 
-# 🎓 ШПАРГАЛКА: КЛАСТЕРИЗАЦИЯ
+Let's begin.
 
-## 1. Введение
+Slide 2. The problem — why old methods are bad
 
-- **Определение:** Кластеризация — это обучение **без учителя**. Задача: разделить объекты на группы (кластеры) так, чтобы **внутри** группы объекты были похожи, а объекты из **разных** групп — отличались.
-    
-- **Вход:** Данные (обычно точки в пространстве признаков).
-    
-- **Выход:** Метки классов для объектов или параметры кластеров.
-    
+[Show slide 2]
 
----
+So, what is the problem?
 
-## 2. Типы алгоритмов: Плоские vs Иерархические
+The authors explain it like this. Face retouching needs two things at the same time — and these two things often fight each other.
 
-### А. Плоские (Flat)
+First. We need to remove small imperfections: pimples, redness, dark circles under the eyes.
 
-Строят **одно** разбиение данных (один уровень).
+Second. We need to keep unique facial features: moles, natural skin texture, the shape of the eyes and lips.
 
-- **Примеры:** DBSCAN, GMM, K-Means.
-    
-- **Особенность:** Результат жестко зависит от гиперпараметров (например,
-    
-            `ϵ\epsilonϵ`
-          
-    
-    ). Если параметр выбран неудачно — всё пересчитывать заново. Резкая зависимость результата от настроек.
-    
+If you remove too much — the face looks like a plastic mask. If you remove too little — the defects remain.
 
-### Б. Иерархические (Hierarchical)
+And existing methods, as the authors show, choose one extreme or the other. They cannot find the middle way.
 
-Строят **дерево** вложенных кластеров (дендрограмму).
+Interactive moment 1 — Ask the audience
 
-- **Особенность:** Результат **плавно** зависит от гиперпараметра (числа кластеров). Можно выбрать количество кластеров после построения дерева, просто «разрезав» его на нужном уровне.
-    
-- **Виды:**
-    
-    1. **Агломеративные (Agglomerative):** Снизу-вверх. Каждая точка — кластер
-        
-                `→\to→`
-              
-        
-        объединяем ближайшие пары
-        
-                `→\to→`
-              
-        
-        пока не получим нужное число.
-        
-    2. **Дивизивные (Divisive):** Сверху-вниз. Весь датасет — один кластер
-        
-                `→\to→`
-              
-        
-        делим самый большой пополам (часто используют K-Means для деления)
-        
-                `→\to→`
-              
-        
-        повторяем.
-        
+Quick question for you. Type + in the chat if you have ever used an automatic retouch tool on your phone — like a beauty filter or a one‑click skin smoother or type - if you haven’t. Now send another + if you were always happy with the result. Much fewer hands. Exactly. This is the problem we are talking about.
 
----
+[pause]
 
-## 3. Типы алгоритмов: Метрические vs Модельные
+The authors divide existing methods into two groups.
 
-### А. Метрические методы
+Group one — Supervised Fine‑Tuning, or SFT.
 
-Основаны на **расстоянии** между точками (обычно Евклидово).
+How does it work? Researchers take pairs of photos. One photo is the original face with defects. The other photo is the same face after a professional retoucher worked on it. Then they force the neural network to copy the result. Pixel by pixel.
 
-- **Важное условие:** Требуют **нормировки** данных (StandardScaler), иначе оси с большими числами «задавят» оси с маленькими.
-    
-- **Алгоритм DBSCAN:**
-    
-    - Принцип: Ищет области высокой плотности. Если соседей в радиусе
-        
-                `ϵ\epsilonϵ`
-              
-        
-        много — это ядро кластера. Расширяется по цепочке соседей («заливка»).
-        
-    - Плюсы: Находит **сложные формы** (кольца, полумесяцы, змейки).
-        
-    - Минусы: **Не умеет предсказывать** для новых данных (нужен пересчет); чувствителен к шуму («пробой» мостика между кластерами); плохо работает с разной плотностью.
-        
+What is wrong with this? The model learns to repeat, but it does not understand why the result is good. It does not know the difference between a pimple (which should be removed) and a mole (which should stay). For the model, both are just spots to remove.
 
-### Б. Модельные методы
+As a result, the model gets stuck in copying. It can never find a solution that is better than what it saw in training. The skin becomes unnaturally smooth, texture disappears, the face looks rigid and fake.
 
-Основаны на предположении, что данные сгенерированы **статистической моделью** (распределением).
+Group two — Reinforcement Learning, or RL.
 
-- **Алгоритм GMM (Гауссова смесь):**
-    
-    - Принцип: Данные — это наложение нескольких нормальных (Гауссовых) распределений. Задача — найти их параметры: центры (
-        
-                `μ\muμ`
-              
-        
-        ), форму/ковариацию (
-        
-                `Σ\SigmaΣ`
-              
-        
-        ) и веса.
-        
-    - Обучение: **EM-алгоритм** (Expectation-Maximization). Итеративно: E-шаг (считаем вероятности для точек), M-шаг (обновляем параметры модели).
-        
-    - Плюсы: **Мягкая кластеризация** (вероятность принадлежности); **Предсказание** для новых данных (через формулу); устойчивость к шуму и растяжению осей.
-        
-    - Минусы: Находит только **эллиптические** (простые) формы.
-        
+Here the model does not copy. It experiments. To make it try new things, the researchers add random noise at every step. The authors refer to a method called FlowGRPO, which adapts reinforcement learning for flow‑matching models.
+
+This sounds good, but there is a new problem.
+
+The noise is getting bigger. The authors call this stochastic drift. The trajectory slowly moves away from the correct path. At the end of the process, instead of a beautiful face, we get artifacts — unnatural spots, blurry areas.
+
+So the authors identify a fundamental conflict.
+
+Supervised learning gives you accuracy, but kills naturalness and freedom. Standard reinforcement learning gives you freedom, but creates noise and artifacts.
+
+The question the researchers ask is: how can we combine the best of both worlds? How can we let the model explore new solutions, but not let it drift into noise?
+
+The answer is BeautyGRPO.
+
+[pause for transition]
 
 ---
 
-## 4. Смешанные алгоритмы (GMsDB)
-
-Объединяют плюсы обоих подходов.
-
-- **Суть:** Используем модельный метод (GMM) с **очень большим** числом кластеров (создаем много мелких эллипсов-кирпичиков). Затем объединяем пересекающиеся эллипсы в один кластер (принцип DBSCAN).
-    
-- **Итог:** Умеет описывать сложные формы (как DBSCAN) и строить модель (как GMM).
-    
-
----
-
-## 5. Методы подбора гиперпараметров
-
-### Для Метрических (DBSCAN) и Иерархических
-
-- **Метод:** Перебор параметров и максимизация метрики качества (обычно Силуэта).
-    
-
-### Для Модельных (GMM)
-
-Главный параметр — число кластеров (
-
-        `NNN`
-      
-
-).
-
-- **Метод:** Информационные критерии (IC).
-    
-- **Принцип Оккама:** Штрафуем модель за сложность. Нельзя просто брать модель с макс. правдоподобием (это ведет к переобучению).
-    
-- **Критерии:**
-    
-    1. **BIC** (Bayesian Information Criterion).
-        
-    2. **AIC** (Akaike Information Criterion).
-        
-- **Правило:** Ищем **минимум** значения BIC или AIC на графике.
-    
-
----
-
-## 6. Метрики качества кластеризации
-
-### А. Внутренняя оценка (Без учителя)
-
-Когда мы не знаем правильных ответов.
-
-- **Коэффициент Силуэта (Silhouette Score):**
-    
-    - Сравнивает расстояние до «своих» (
-        
-                `aaa`
-              
-        
-        ) и до «чужих» (
-        
-                `bbb`
-              
-        
-        ).
-        
-    -         `S=b−amax⁡(a,b)S = \frac{b-a}{\max(a,b)}S=max(a,b)b−a​`
-              
-        
-    - **+1:** Идеально (кластеры плотные и далеко друг от друга).
-        
-    - **0:** Точки на границе, кластеры пересекаются.
-        
-    - **-1:** Ошибка (точка не в том кластере).
-        
-
-### Б. Внешняя оценка (С учителем)
-
-Когда есть правильная разметка (например, semi-supervised learning или тест).
-
-- **ARI (Adjusted Rand Index):**
-    
-    - Считает долю пар точек, которые были правильно разбиты (вместе или порознь) по сравнению с эталоном.
-        
-    - Adjusted (Скорректированный): учитывает вероятность случайного совпадения. ARI > 0 означает результат лучше случайного гадания.
-        
-
----
-
-### 🔥 Главное для понимания (лайфхак на экзамен):
-
-Если спросят **«В чем принципиальная разница между DBSCAN и GMM?»**, отвечай про **предсказание**:
-
-> «DBSCAN запоминает связи между точками "здесь и сейчас", поэтому для новых данных нужно все пересчитывать. GMM выводит математическую формулу (параметры распределения), поэтому к новым данным он просто применяет эту формулу и может делать предсказания мгновенно».
+Slide 3. FRPref‑10K — how they collected the data
 
 
-Вот обновленная, **большая шпаргалка по Тематическому моделированию**, из которой убраны лишние части (про мнемотехнику и блиц). Осталась только суть, структурированная для экзаменационного ответа.
+Before I explain the algorithm, I need to tell you where the data comes from.
+
+The authors created their own dataset. They called it FRPref‑10K. This stands for Face Retouching Preference — 10,000 examples.
+
+Let me explain what is inside this dataset, step by step.
+
+
+First. Source portraits.
+
+The authors took 70 percent of the images from an open dataset called FFHQR — these are high‑quality portraits. The other 30 percent came from their own collection. They did this on purpose to have diversity: different ages, different ethnic groups, different lighting conditions.
+
+Second. Generating candidates to compare.
+
+For each original portrait, the authors generated many retouched versions. They used several modern models: NanoBanana, Flux.1 Kontext, RetouchFormer. And for each model, they used different random seeds — this means they ran the same model many times with slightly different starting points.
+
+Then they formed pairs for comparison in two ways. First way — compare two different models against each other. Second way — compare a model's result against a high‑quality example from the training set.
+
+Third. Five quality dimensions.
+
+Here the authors did something very important. They did not just ask "like or don't like". They defined five specific, measurable dimensions.
+
+Here they are:
+
+1. Skin smoothing — is the skin too smooth or just right?
+2. Blemish removal — are pimples gone, but moles still there?
+3. Texture quality — can you see pores and natural shine?
+4. Clarity — is the face sharp or blurry?
+5. Identity preservation — do you still recognize the person?
+
+
+Fourth. Three‑level annotation.
+
+The authors did not trust a single person or a single neural network. They built a system with three levels.
+
+Level one. An ensemble of three large vision‑language models. Each of them looked at a pair of images, wrote a short reasoning, and gave a score. The three opinions were averaged.
+
+Level two. Trained human annotators checked the scores using the same criteria. If the human agreed with the AI consensus, the annotation was accepted.
+
+Level three. If there was disagreement between humans and AIs, then professional retouchers made the final decision.
+
+
+Interactive moment 2 — Ask the audience
+
+So every one of the 10,000 pairs went through this three‑stage check. This gave the authors very clean, reliable annotations.
+
+Slide 4. Dynamic Path Guidance (DPG) — the idea
+
+Now we come to the heart of the method. The authors call it Dynamic Path Guidance, or DPG for short.
+
+On the slide you see the key idea, written by the authors themselves. It says:
+
+"BeautyGRPO offers a third path. Not copying and not making random noise, but softly guiding the model by giving it an anchor — good examples of retouching — while not forbidding it to deviate if this leads to a more beautiful result."
+
+What does the word "anchor" mean here? Let me explain.
+
+[pause]
+
+An anchor is a concrete photo from the FRPref‑10K dataset. A photo that has already been retouched and is considered very good. The skin looks natural and defects are removed.
+
+But here is the important point. The anchor is not a target image like in supervised learning. It is just a soft guide.
+
+The model does not have to match the anchor. It can deviate if this leads to a higher score from the reward model. The anchor is only there to prevent the model from drifting too far into noise.
+
+So at each step, the model does two things.
+
+First. It calculates where it wants to go by itself, based on its own intuition. This is what it has learned so far.
+
+Second. It looks at the anchor and calculates where it would go if it followed the ideal path toward the anchor.
+
+Then it mixes these two directions.
+
+And here is the key: the mixing proportion changes over time.
+
+At the beginning of the process, when the image is still chaotic noise, the model listens more to the anchor.
+
+At the end of the process, when the image already looks like a face and only fine details remain — pores, natural shine, small irregularities — the model gets more freedom. It can deviate a little, try new things, search for more beautiful results.
+
+The authors call this "controlled stochasticity".
+
+The main difference between DPG and the old FlowGRPO method is that the noise does not accumulate uncontrollably. At every step, there is a kind of leash that softly pulls the model back toward the safe trajectory. But the leash does not pull hard, and it does not forbid exploration.
+
+This is what allows, in the authors' words, "reconciling exploration with high‑fidelity requirements".
+
+[pause for transition]
 
 ---
 
-# 🎓 ШПАРГАЛКА: ТЕМАТИЧЕСКОЕ МОДЕЛИРОВАНИЕ
+Slide 5. What the formulas look like
 
-## ЧАСТЬ 1. ВВЕДЕНИЕ И ПОДГОТОВКА ДАННЫХ
+[Show slide 5]
 
-### 1. Постановка задачи
-*   **Определение:** Тематическое моделирование — это способ "слепой" кластеризации текстов (обучение без учителя).
-*   **Цель:** Алгоритм должен проанализировать коллекцию документов и выдать:
-    1.  Список **Тем** (наборов слов).
-    2.  Распределение **Тем в Документах** (например, этот текст на 80% про Спорт, на 20% про Бизнес).
-*   **Аналогия:** Библиотекарь расставляет тысячи книг по жанрам, не читая их, а только анализируя статистику слов на обложках.
+Now I will show you how these ideas look in mathematics. There are five blocks on the slide. I will explain each one in simple words. [pause]
 
-### 2. Представление данных (Bag of Words)
-Компьютер работает не с текстом, а с матрицами.
-*   **Матрица $M$ (Документ-Термин):** Огромная таблица.
-    *   **Строки:** Слова (весь словарь).
-    *   **Столбцы:** Документы.
-    *   **Значения:** Сколько раз слово встретилось в документе.
-*   **Проблема:** Матрица очень разреженная (много нулей) и шумная.
+Block 1. Step in the old FlowGRPO method
 
-### 3. TF-IDF (Term Frequency - Inverse Document Frequency)
-Обязательный этап предобработки, чтобы очистить данные от мусора.
-*   **TF (Локальная частота):** Часто ли слово встречается в *этом* тексте?
-*   **IDF (Глобальная редкость):** Насколько слово редкое во *всей* коллекции?
-*   **Суть:** Мы уменьшаем вес общеупотребительных слов («и», «сказал», «который») и увеличиваем вес уникальных терминов («инфляция», «процессор»).
+```latex
+x_{t-\Delta t} = \mu_t + \sigma_{\text{step}} z_t, \quad z_t \sim \mathcal{N}(0, I)
+```
 
----
+What does each symbol mean?
 
-## ЧАСТЬ 2. ЭВОЛЮЦИЯ МЕТОДОВ (LSA $\to$ PLSA $\to$ LDA)
+· x — the image. A set of pixels.
+· t — the current time. The process goes from t=1 (pure noise) to t=0 (clean face).
+· \Delta t — the step size. A small number.
+· x_{t-\Delta t} — the image at the next step. What we get after one step.
+· \mu_t — the predicted drift. Where the model wants to go based on its intuition. No noise yet.
+· \sigma_{\text{step}} — the noise scale for one step. How strong the random noise can be.
+· z_t — random noise. A vector of random numbers from a standard normal distribution.
+· \mathcal{N}(0, I) — the standard normal distribution. Zero is the average. I means each coordinate is independent.
 
-Все методы строятся на идее **Матричного Разложения**. Мы пытаемся представить сложную исходную матрицу $M$ как произведение трех более простых матриц:
-$$ M \approx (\text{Слова} \times \text{Темы}) \cdot (\text{Веса Тем}) \cdot (\text{Темы} \times \text{Документы}) $$
+Simple meaning: new image = where the model wants to go + random noise. This noise accumulates and causes drift.
 
-### 1. LSA (Latent Semantic Analysis) — Алгебраический подход
-*   **Суть:** Использует линейную алгебру, а именно **SVD-разложение** (Singular Value Decomposition).
-*   **Формула:** $M = U \times \Sigma \times V$.
-    *   $U$ — Матрица слов.
-    *   $\Sigma$ — Диагональная матрица с силой (рейтингом) тем.
-    *   $V$ — Матрица документов.
-*   **Плюсы:** Быстрый, точный математически.
-*   **Минусы (Критические):**
-    *   Матрицы содержат **отрицательные числа**. Невозможно интерпретировать физический смысл («Вклад темы равен -5»).
-    *   Не работает с новыми документами без пересчета всей модели.
+[pause]
 
-### 2. PLSA (Probabilistic LSA) — Вероятностный подход
-*   **Суть:** Исправляет недостатки LSA. Переходит от абстрактных чисел к **вероятностям** (от 0 до 1).
-*   **Принцип:** Вероятность появления слова в документе — это сумма вероятностей по всем темам.
-*   **Алгоритм:** Использует **EM-алгоритм** (Expectation-Maximization) — итеративный процесс "угадывания" и "уточнения" параметров.
-*   **Плюсы:** Все числа положительные, легко интерпретировать.
-*   **Минусы:**
-    *   **Переобучение:** Модель просто запоминает конкретные документы из обучающей выборки.
-    *   Нет параметров для генерации тем в **новых** (невиданных) документах.
+Block 2. The anchor‑guided target
 
-### 3. LDA (Latent Dirichlet Allocation) — Генеративный подход
-Самый популярный классический метод.
-*   **Суть:** Добавляет к PLSA **априорное распределение Дирихле**.
-*   **Генеративная модель:** Мы предполагаем, что тексты не случайны, а создаются по скрытому закону (процессу):
-    1.  Автор выбирает распределение тем для документа (с параметром $\alpha$).
-    2.  Для каждого слова выбирает тему.
-    3.  Выбирает слово из распределения слов темы (с параметром $\beta$).
-*   **Роль распределения Дирихле:** Оно выступает как **регуляризатор**. Мы заранее говорим модели: «Мы хотим, чтобы в документе было мало тем, а в теме — мало слов».
-*   **Плюсы:**
-    *   Не переобучается (благодаря ограничениям Дирихле).
-    *   Может предсказывать темы для **новых** документов.
+```latex
+x_{t-\Delta t}^* = \left(\frac{\Delta t}{t}\right)x_0^{\text{anchor}} + \left(1 - \frac{\Delta t}{t}\right)x_t
+```
 
----
+New symbols:
 
-## ЧАСТЬ 3. РЕГУЛЯРИЗАЦИЯ И BIGARTM
+· x_{t-\Delta t}^* — the ideal target for the next step. Where we would go if we moved straight toward the anchor.
+· x_0^{\text{anchor}} — the anchor. A good retouched image from FRPref‑10K.
+· \frac{\Delta t}{t} — a simple fraction. It tells us how far we move toward the anchor in one step.
 
-### 1. Проблема единственности решения
-У задач матричного разложения (PLSA/LDA) нет единственного решения. Математически можно разложить матрицу сотней способов, но большинство из них будут бессмысленными для человека (темы перемешаются).
+Simple meaning: draw a straight line from current state to anchor. Look where you land after one small step. That is x_{t-\Delta t}^*.
 
-### 2. ARTM (Аддитивная Регуляризация)
-Подход, реализованный в библиотеке **BigARTM**.
-Мы добавляем к основной задаче максимизации правдоподобия **регуляризаторы** $R$ (дополнительные штрафы или бонусы).
-$$ \text{Правдоподобие} + \tau \cdot R(\text{Матрицы}) \to \max $$
+[pause]
 
-### 3. Основные приемы в BigARTM
+Block 3. Correction vector
 
-#### А. Разделение тем на Фоновые и Предметные
-*   **Фоновые темы (Background Topics):**
-    *   *Зачем:* Чтобы собрать в себя общие слова-паразиты («быть», «мочь», «год»), которые есть везде.
-    *   *Метод:* **Сглаживание (Smoothing)**. Мы разрешаем этим темам быть «размазанными» по всему словарю.
-*   **Предметные темы (Specific Topics):**
-    *   *Зачем:* Чтобы выделить четкий смысл («Ядерная физика», «Футбол»).
-    *   *Метод:* **Разреживание (Sparsity)**. Мы штрафуем тему, если в ней слишком много разных слов. Оставляем только "ядро".
+```latex
+z_t^{\text{anchor}} = \frac{x_{t-\Delta t}^* - \mu_t}{\sigma_{\text{step}}}
+```
 
-#### Б. Декорреляция тем
-*   **Проблема:** Часто модель находит две почти одинаковые темы (дубликаты).
-*   **Решение:** Добавляем штраф за похожесть тем. Если слово уже занято одной темой, другой теме «невыгодно» его брать. Темы становятся максимально **различными**.
+New symbols:
 
+· z_t^{\text{anchor}} — the correction vector. It shows how much and in what direction we need to change \mu_t to match the anchor path.
+· x_{t-\Delta t}^* - \mu_t — the difference between "ideal anchor target" and "where the model wants to go". If this difference is large, the model has drifted far. If it is small, the model is close to the right path.
+· Dividing by \sigma_{\text{step}} makes the correction comparable in size to the random noise.
 
-Вот готовая **шпаргалка (структурированный ответ)** для экзамена. Она составлена строго по твоим материалам.
+Simple meaning: calculate how far the model has drifted away from the anchor path. Turn that into a correction vector.
 
-Можешь переписать её на листок или выучить этот план ответа.
+[pause]
 
----
+Block 4. Mixing the correction with random noise
 
-# ШПОРА: Доверительные интервалы и P-value
+```latex
+z_t^{\text{mix}} = \lambda(t) z_t^{\text{anchor}} + (1 - \lambda(t)) z_t^{\text{std}}
+```
 
-#### 1. Квантили (База для интервалов)
-**Определение:** Значение, которое делит упорядоченную выборку на две части.
-*   **$Q_p$** — значение, ниже которого лежит доля $p$ всей выборки.
-*   **Виды:**
-    *   **Медиана ($Q_{0.5}$):** Делит ровно пополам (50% меньше, 50% больше).
-    *   **Квартили:** Делят на 4 части ($Q_{0.25}, Q_{0.5}, Q_{0.75}$).
-    *   **Перцентили:** Делят на 100 частей (по 1%).
+New symbols:
 
-#### 2. Доверительный интервал (CI)
-**Суть:** Диапазон значений, в который с заданной вероятностью ($p$) попадает истинное значение параметра (например, истинная длина спички).
-*   **Уровень доверия ($p$):** Обычно 0.95 (95%).
-*   **Уровень значимости ($\alpha$):** Вероятность ошибки (то, что мы не попадем в интервал). $\alpha = 1 - p$. Обычно $\alpha = 0.05$.
+· z_t^{\text{mix}} — the mixed, hybrid noise. This is what we will actually use.
+· \lambda(t) — a time‑dependent weight. It decides how much of the correction we take versus how much random noise.
+· z_t^{\text{std}} — standard random noise, the same as z_t in block 1.
 
-**Виды интервалов:**
-1.  **Двухсторонний:** Ограничен с обеих сторон. $[Q_{\alpha/2}, Q_{1-\alpha/2}]$. (Самый частый).
-2.  **Левосторонний (Нижний):** "Значение точно не меньше X". $[Q_{\alpha}, +\infty)$.
-3.  **Правосторонний (Верхний):** "Значение точно не больше Y". $(-\infty, Q_{1-\alpha}]$.
+How does \lambda(t) work?
 
-**Правило для Нормального распределения:**
-*   $\bar{x} \pm 2\sigma$ — покрывает **95%** данных.
-*   $\bar{x} \pm 3\sigma$ — покрывает **99.7%** данных (Правило трех сигм).
+```latex
+\lambda(t) = \frac{t}{\max(1, T-t)}
+```
 
----
+Here T is the total number of steps (for example, 30 or 50).
 
-#### 3. Проверка статистических гипотез
-**Три компонента проверки:**
-1.  **Гипотезы:**
-    *   **$H_0$ (Нулевая):** Эффекта нет, отклонение случайное, станок исправен.
-    *   **$H_1$ (Альтернативная):** Эффект есть, отклонение значимое.
-    *   *Важно:* Мы проверяем $H_0$ на опровержение.
-2.  **Статистика:** Формула (функция от выборки), дающая число для проверки.
-3.  **Критерий:** Правило принятия решения.
+How \lambda(t) changes over time:
+
+· When t is large (beginning of the process), the numerator is large, denominator is small. \lambda is close to 1. The model mostly follows the anchor correction.
+· When t is small (end of the process), the numerator is small, denominator is large. \lambda is close to 0. The model mostly follows random noise.
+
+Simple meaning: take correction and random noise. Mix them. At the beginning, listen more to the anchor. At the end, listen more to randomness.
+
+[pause]
+
+Block 5. Final DPG step
+
+```latex
+x_{t-\Delta t}^{\text{guided}} = \mu_t + \lambda \sigma_{\text{step}} z_t^{\text{anchor}} + (1 - \lambda) \sigma_{\text{step}} z_t^{\text{std}}
+```
+
+New symbol:
+
+· x_{t-\Delta t}^{\text{guided}} — the final image at the next step, obtained with DPG.
+
+What this formula does:
+
+It takes the model's intuition \mu_t. It adds the anchor correction multiplied by \lambda and the noise scale. It adds random noise multiplied by (1-\lambda) and the noise scale.
+
+The authors also give an equivalent form:
+
+```latex
+x_{t-\Delta t}^{\text{guided}} = (1 - \lambda) \mu_t + \lambda x_{t-\Delta t}^* + (1 - \lambda) \sigma_{\text{step}} z_t^{\text{std}}
+```
+
+This second version is easier to understand. It says: new image = a mix of the model's intuition \mu_t (weight 1-\lambda) and the anchor target x_{t-\Delta t}^* (weight \lambda), plus a little random noise.
+
+[pause]
+
+Interactive moment 3 — Ask the audience a rhetorical question
+
+So after seeing these formulas — does anyone want to guess why the authors call it "Dynamic Path Guidance"? [Pause 3 seconds] It is dynamic because the mixing weight λ changes over time. At the beginning it is large, at the end it is small. The path is guided by the anchor, but not forced. That is the whole idea.
+
+[pause]
+
+So all five formulas describe one simple and elegant idea. The model mixes its own intuition with a hint from the anchor. At the beginning, it listens more to the anchor — to avoid drifting into noise. At the end, it listens more to its own intuition and random noise — to find the best fine details.
+
+[pause for transition]
 
 ---
 
-#### 4. P-value (P-значение)
-**Определение:** Вероятность получить такие (или еще более экстремальные) данные, **при условии, что $H_0$ верна**.
+Slide 6. Results
 
-**Алгоритм принятия решения (Правило $\alpha$):**
-Сравниваем p-value с уровнем значимости (обычно 0.05).
+[Show slide 6]
 
-*   **Если $p\text{-value} < 0.05$ (Мало):**
-    *   Событие слишком редкое для нормы.
-    *   **ОТВЕРГАЕМ $H_0$**. Принимаем $H_1$. (Различие значимо).
-*   **Если $p\text{-value} > 0.05$ (Много):**
-    *   Событие обычное, могло быть случайно.
-    *   **НЕ отвергаем $H_0$**. (Нет оснований считать, что что-то не так).
+Now — the most important part. What results did the authors get?
 
----
+In the paper there is a large table — Table 1. I will not list every number, but I will give you the main findings.
 
-#### 5. Классификация критериев (Виды тестов)
+[pause]
 
-**А. По типу данных:**
-*   **Параметрические:** Знаем закон распределения (обычно Нормальное). Используем Среднее и Дисперсию.
-*   **Непараметрические:** Не знаем распределения. Используем Ранги.
+First. Comparison with existing methods.
 
-**Б. По знанию дисперсии (для Параметрических):**
-*   **Z-критерий:** Истинная дисперсия ($\sigma$) **ИЗВЕСТНА**.
-*   **T-критерий (Стьюдента):** Истинная дисперсия **НЕИЗВЕСТНА** (оцениваем её по выборке).
+The authors compared BeautyGRPO with five specialized retouching models and four general editing models. They also compared with FlowGRPO — the method that uses SDE without guidance.
 
-**В. По количеству выборок:**
-*   **Одновыборочные:** Сравниваем выборку с числом (эталоном).
-*   **Двухвыборочные:** Сравниваем две выборки.
-    *   *Связанные:* Измерения "До" и "После" на одних объектах.
-    *   *Несвязанные:* Разные объекты (Мужчины vs Женщины).
+They evaluated the results using six no‑reference quality metrics. These metrics try to measure how natural and beautiful an image looks without needing a "perfect" reference image.
 
----
+On all of these metrics, BeautyGRPO beats every existing method.
 
-### Главный совет на экзамене:
-Если спросят суть, говори: *"Мы строим интервал нормальности. Если наши данные вылетают из него (p-value маленькое), значит, это не норма, а аномалия ($H_1$). Если попадают внутрь — считаем нормой ($H_0$)"*.
+Let me give you one concrete example. The metric NIMA measures aesthetic appeal on a scale from 0 to 10. The best competing models score around 4.7 to 4.9. BeautyGRPO scores 5.123 on the FFHQ dataset and 5.357 on the in‑the‑wild dataset. That is about a 10 percent improvement.
 
+On the MUSIQ metric, the improvement is even larger. The best competitor gives about 4.68. BeautyGRPO gives 4.906 on FFHQ and 4.982 on in‑the‑wild.
 
+[pause]
 
-Вот четкая структурная схема-шпаргалка, разделенная на **Одновыборочные** и **Двухвыборочные** критерии.
+Second. User study.
 
----
+The authors ran a survey with 100 participants of different ages and skill levels. They used 20 random test cases.
 
+There were two questionnaires.
 
-Вот **МЕГА-ШПАРГАЛКА**, которая закрывает весь твой билет: **«Параметрика, Непараметрика, Бутстрап, Множественная проверка»**.
+In the first questionnaire, participants saw one original portrait and five retouched versions from different methods. They chose the one they liked best.
 
-Я объединил твою структуру с новыми темами. Распечатай или сохрани в "Избранное".
+The result is shown in Table 2 of the paper. BeautyGRPO was chosen in 63.25 percent of cases. The closest competitor — the Kontext model with LoRA — got only 12 percent. That is more than a five‑times difference.
 
----
+[pause]
 
-# 🎓 БОЛЬШАЯ ШПАРГАЛКА: ПРОВЕРКА ГИПОТЕЗ
+In the second questionnaire, participants rated the retouched results on the same five dimensions that the authors used for data collection: skin smoothing, blemish removal, texture quality, clarity, and identity preservation. They used a five‑point scale.
 
-## 🧠 БЛОК 0. ЛОГИКА ПРИНЯТИЯ РЕШЕНИЙ (База)
+The authors then compared these human scores with the predictions of different reward models. Their own reward model showed very high correlation — especially for blemish removal, where it reached 87 percent agreement with human judgment.
 
-1.  **Гипотезы:**
-    *   **$H_0$ (Нулевая):** Разницы нет. Всё стандартно. Случайность.
-    *   **$H_1$ (Альтернативная):** Разница ЕСТЬ. Эффект ЕСТЬ.
-2.  **P-value** — вероятность получить такие данные случайно, если $H_0$ верна.
-3.  **Правило (при $\alpha=0.05$):**
-    *   🔴 **$p < 0.05$** $\to$ **ОТВЕРГАЕМ $H_0$**. (Слишком редкое событие. Эффект значим).
-    *   🟢 **$p > 0.05$** $\to$ **НЕ отвергаем $H_0$**. (Обычное событие. Эффекта не видно).
+[pause]
+
+Third. Ablation studies.
+
+The authors also ran several extra experiments.
+
+They showed that their own reward model works better than existing ones — EditReward, EditScore, UnifiedReward-Edit. Results are in Table 3.
+
+They also applied BeautyGRPO to a different base model called Qwen-Image-Edit. The improvements remained. Results in Table 4.
+
+And they studied how many DPG steps are optimal. The best value was K = 3 — meaning the full trajectory is split into three segments, and DPG is applied to one random step in each segment. This gives the same quality as more steps but with less computation.
+
+[pause for transition]
 
 ---
 
-## 📈 БЛОК 1. ПАРАМЕТРИЧЕСКИЕ МЕТОДЫ (Средние и Доли)
-**Требования:** Нормальное распределение данных (или $n > 30$). Работают с **числами**.
+Slide 7. Visual comparisons
 
-### 1.1. ОДНА ВЫБОРКА (Сравниваем с числом-эталоном)
-> *Вопрос:* "Равен ли средний чек 1000 рублям?"
+[Show slide 7]
 
-| Тип данных | Дисперсия ($\sigma$)? | **Критерий** | Особенности |
-| :--- | :--- | :--- | :--- |
-| **Среднее** | Известна (редко) | **Z-критерий** | Формула со стандартным отклонением генеральной совокупности. |
-| **Среднее** | **НЕ известна** | **T-критерий Стьюдента** | Считаем $s$ по выборке. Распределение с "толстыми хвостами". $df = n-1$. |
-| **Доля** (0/1) | — | **Z-критерий доли** | Только для больших выборок ($n \cdot p > 5$). $\sigma$ выводится из $p$. |
+I will comment on this slide briefly. A picture is worth a thousand words.
 
-### 1.2. ДВЕ ВЫБОРКИ (Сравниваем Группу А и Группу Б)
+On the slide you see examples from the paper. In each row or column: the original face, the result from the best existing method, and the result from BeautyGRPO.
 
-| Связь групп | Тип данных | **Критерий** | Особенности |
-| :--- | :--- | :--- | :--- |
-| **Независимые**<br>(Разные люди) | **Среднее** | **T-критерий Уэлча** 🔥 | Самый популярный. Работает, даже если **дисперсии в группах не равны**. |
-| **Независимые** | **Доля** | **Z-критерий долей** | Использует общую долю $p_0$ (pooled proportion) в знаменателе. |
-| **Связанные**<br>(До/После) | **Среднее** | **Парный T-критерий** | Считает разницу $d = After - Before$ для каждого, проверяет, равно ли среднее $d$ нулю. |
-| **Связанные** | **Доля** | **Тест Макнемара** | Для тех, кто поменял мнение. Сравнивает ячейки $b$ (Да$\to$Нет) и $c$ (Нет$\to$Да). |
+[pause]
 
----
+Look at three things.
 
-## 📊 БЛОК 2. НЕПАРАМЕТРИЧЕСКИЕ МЕТОДЫ (Ранги)
-**Когда брать:** Данные **НЕ нормальные**, есть **выбросы**, или выборка очень **маленькая**.
-**Суть:** Заменяем реальные значения на их **Ранги** (места 1, 2, 3...). Сравниваем **Медианы**.
+First — skin texture. In the competitors' results, the skin is often either completely smoothed out — like plastic — or covered with noise artifacts. In BeautyGRPO, the skin remains alive, with visible pores and natural shine.
 
-| Задача | Параметрический аналог | **НЕпараметрический критерий** | Как работает |
-| :--- | :--- | :--- | :--- |
-| Одна выборка vs Число | One-sample T-test | **Вилкоксон (одновыборочный)** | Ранжирует модули отклонений от гипотезы. Сравнивает сумму рангов "+" и "-". |
-| Две **Независимые** группы | Independent T-test | **Манна-Уитни (U-test)** 🔥 | Смешивает выборки в одну кучу, ранжирует. Смотрит, не улетели ли ранги одной группы выше другой. |
-| Две **Связанные** группы | Paired T-test | **Вилкоксон (парный)** | Считает разницы пар ("После" - "До"), ранжирует их модули, смотрит на знаки рангов. |
+Second — moles and small details. Competitors often remove them together with defects. They cannot tell the difference between a temporary imperfection and a unique facial feature. BeautyGRPO keeps them.
+
+Third — overall naturalness. Other methods often look "over‑processed". BeautyGRPO looks natural — as if the person simply had a good night's sleep, not as if they went through a heavy filter.
+
+[pause]
+
+The authors emphasize that their method removes blemishes cleanly but preserves identity — the person remains recognizable. In their view, this is the main criterion of good retouching.
+
+[pause for transition]
 
 ---
 
-## 🔄 БЛОК 3. БУТСТРАП (Bootstrap)
-**Когда брать:** Универсальный метод "тяжелой артиллерии". Когда нет формул, нет нормальности, но есть мощный компьютер.
+Slide 8. Conclusion. Thank you
 
-1.  **Суть:** Считаем, что наша выборка — это и есть генеральная совокупность.
-2.  **Алгоритм:**
-    *   Берем из выборки элементы **с возвратом** (много раз).
-    *   Формируем новую псевдо-выборку той же длины.
-    *   Считаем нужную статистику (среднее, медиану, квантиль).
-    *   Повторяем 10 000 раз $\to$ получаем распределение.
-3.  **Решение:** Строим Доверительный Интервал (например, от 2.5% до 97.5% перцентиля).
-    *   Если $H_0$ внутри интервала $\to$ Ок.
-    *   Если $H_0$ снаружи $\to$ Отвергаем.
+[Show slide 8]
 
----
+Let me summarize.
 
-## 🛡️ БЛОК 4. МНОЖЕСТВЕННАЯ ПРОВЕРКА (Correction)
-**Проблема:** Если проверить 20 гипотез с $\alpha=0.05$, вероятность найти ложный эффект $\approx 64\%$ (FWER).
-**Решение:** Нужно ужесточать порог $\alpha$.
+[pause]
 
-| Метод | Жесткость | Формула порога | Где применять |
-| :--- | :--- | :--- | :--- |
-| **Бонферрони** | 💀 Очень жесткий | $\alpha / N$ (для всех) | Медицина, безопасность. Гарантирует 0 ошибок, но пропускает открытия. |
-| **Холм** | 👮‍♂️ Строгий (лучше Бонферрони) | $\alpha / (N - i + 1)$ (пошагово) | Там же, где Бонферрони, но мощнее. Step-down метод. |
-| **Бенджамини-Хохберг (FDR)** | 🤝 Разумный баланс | $\alpha \cdot \frac{i}{N}$ | **Бизнес, Data Science.** Допускает небольшой % ошибок (например, 5%), но находит максимум реальных эффектов. |
+The researchers whose work I have presented today did three main things.
 
----
+First. They created the FRPref‑10K dataset — 10,000 pairs of images, annotated along five dimensions with a three‑level process. First three AIs, then human annotators, then expert retouchers. Using this dataset, they trained a reward model that predicts human preferences with high accuracy — up to 87 percent for blemish removal.
 
-### 🚀 АЛГОРИТМ ВЫБОРА НА ЭКЗАМЕНЕ (Финал)
+Second. They proposed the Dynamic Path Guidance algorithm — DPG. This algorithm solves the fundamental conflict between exploration and fidelity. Not copying like in supervised learning. Not random noise like in standard RL. But soft, adaptive guidance using an anchor — a good example of retouching. The mixing coefficient changes over time: at the beginning the model listens more to the anchor, at the end it gets more freedom.
 
-1.  **Смотри на данные:**
-    *   Есть метки 0/1 (Да/Нет)? $\to$ **Z-тест долей** (или Макнемар, если парные).
-    *   Есть Числа? $\to$ Проверь нормальность/выбросы.
+Third. They proved experimentally that BeautyGRPO beats all existing methods. On objective aesthetic metrics — about 10 percent improvement. On direct human preferences — more than a five‑times difference.
 
-2.  **Нормальность:**
-    *   Нормальные (или $n>30$)? $\to$ **Параметрика (T-тест)**.
-    *   Кривые / Выбросы / Мало данных? $\to$ **Непараметрика (Ранги)**.
+[pause]
 
-3.  **Связь выборок:**
-    *   Одна группа? $\to$ Одновыборочный (T / Вилкоксон).
-    *   Две разные группы? $\to$ Независимый (T Уэлча / Манна-Уитни).
-    *   До и После? $\to$ Связанный (Парный T / Парный Вилкоксон).
+The paper also discusses limitations. The authors honestly say that their method depends on having a good anchor for each input image. Finding alternative ways to choose anchors — for example, picking from several candidates or building pseudo‑anchors automatically — is future work.
 
-4.  **Много тестов сразу?**
-    *   Включи **FDR (Бенджамини)** или **Холма**.
+Also, DPG is only used during training. At inference time — when the model is actually used — they use standard ODE sampling without anchors and without extra computation.
+
+[pause]
+
+I want to end with one sentence. The authors do not write it literally, but I believe it captures the spirit of their work.
+
+Good retouching does not erase your face. It helps you look like the best version of yourself — with the same moles, the same texture, the same story.
+
+[pause]
+
+Thank you for your attention. I am ready to answer your questions.
